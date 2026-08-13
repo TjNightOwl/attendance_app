@@ -1,12 +1,8 @@
 """
+programmer: Tarsizious Chikaonda
+E-mail: tarsiziouschikaonda@gmail.com
 Meeting Attendance Scanner
 --------------------------
-A mobile-friendly web app for scanning participant name-tag QR codes to
-confirm attendance across one or more meeting days.
-
-Run with:  python app.py
-Then open the printed URL on the phone that will do the scanning.
-See README.md for notes on camera permissions (HTTPS/localhost requirement).
 """
 
 import csv

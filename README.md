@@ -83,11 +83,9 @@ are required, and no data is sent anywhere outside your own server.
 
 ## Extending it
 
-Some natural next steps if you want to grow this later:
-- Multiple staff members scanning at once — already supported, since scanning
-  just calls a shared server.
+Next steps for the program:
+- Multiple staff members scanning at once.
 - Email/SMS confirmation on check-in.
-- Login/auth if you want to restrict who can create meetings or view reports.
-- Sharing one participant across multiple meetings (currently each
-  participant belongs to a single meeting, which keeps things simple for
-  per-event name tags).
+- adding attendee role(presenter/attendee) on tag
+- adding organiser on Tag, for people who organized the meeting
+- removing meeting name on Tag
