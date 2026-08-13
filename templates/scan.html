@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Scan Attendance — {{ meeting['name'] }}{% endblock %}
+{% block content %}
+  <h1>Scan Attendance</h1>
+  <p class="card-sub">{{ meeting['name'] }}</p>
+
+  <label class="day-select-label">Scanning for day:
+    <select id="dateSelect">
+      {% for d in days %}
+        <option value="{{ d }}" {% if d == default_day %}selected{% endif %}>{{ d }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <div id="reader"></div>
+
+  <div id="result" class="scan-result"></div>
+
+  <h2>Check-in log</h2>
+  <ul id="log" class="scan-log"></ul>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const meetingId = {{ meeting['id'] }};
+    const resultEl = document.getElementById('result');
+    const logEl = document.getElementById('log');
+    const dateSelect = document.getElementById('dateSelect');
+
+    let lastCode = null;
+    let lastTime = 0;
+
+    function showResult(status, message) {
+      resultEl.textContent = message;
+      resultEl.className = 'scan-result scan-' + status;
+    }
+
+    function addLogEntry(status, message) {
+      const li = document.createElement('li');
+      li.className = 'log-' + status;
+      const time = new Date().toLocaleTimeString();
+      li.textContent = `[${time}] ${message}`;
+      logEl.prepend(li);
+    }
+
+    async function onScanSuccess(decodedText) {
+      const now = Date.now();
+      // Debounce: ignore the same code scanned again within 3 seconds
+      // (the camera keeps reading the same tag while it's in view).
+      if (decodedText === lastCode && now - lastTime < 3000) return;
+      lastCode = decodedText;
+      lastTime = now;
+
+      try {
+        const res = await fetch(`/meetings/${meetingId}/scan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: decodedText, date: dateSelect.value })
+        });
+        const data = await res.json();
+        showResult(data.status, data.message);
+        addLogEntry(data.status, data.message);
+        if (navigator.vibrate) navigator.vibrate(data.status === 'ok' ? 80 : 200);
+      } catch (err) {
+        showResult('error', 'Network error while recording check-in.');
+      }
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        // Prefer the back/environment camera on phones
+        const camId = cameras.find(c => /back|rear|environment/i.test(c.label))?.id || cameras[cameras.length - 1].id;
+        html5QrCode.start(
+          camId,
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          onScanSuccess
+        ).catch(err => showResult('error', 'Could not start camera: ' + err));
+      } else {
+        showResult('error', 'No camera found on this device.');
+      }
+    }).catch(err => {
+      showResult('error', 'Camera permission denied or unavailable: ' + err);
+    });
+  </script>
+{% endblock %}

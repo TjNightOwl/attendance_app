@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}New Meeting{% endblock %}
+{% block content %}
+  <h1>New Meeting</h1>
+  <form method="POST" class="form">
+    <label>Meeting name
+      <input type="text" name="name" placeholder="e.g. Annual Health Conference" required>
+    </label>
+    <label>Start date
+      <input type="date" name="start_date" required>
+    </label>
+    <label>End date
+      <input type="date" name="end_date" required>
+    </label>
+    <p class="hint">For a 1-day meeting, use the same start and end date. For a 5-day meeting, set the range and each day will be tracked separately.</p>
+    <button type="submit" class="btn btn-primary">Create Meeting</button>
+  </form>
+{% endblock %}

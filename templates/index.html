@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Meetings{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>Meetings</h1>
+    <a class="btn btn-primary" href="{{ url_for('new_meeting') }}">+ New Meeting</a>
+  </div>
+
+  {% if meetings %}
+    <div class="card-list">
+      {% for m in meetings %}
+        <a class="card" href="{{ url_for('meeting_detail', meeting_id=m['id']) }}">
+          <div class="card-title">{{ m['name'] }}</div>
+          <div class="card-sub">
+            {{ m['start_date'] }}
+            {% if m['start_date'] != m['end_date'] %} → {{ m['end_date'] }}{% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">No meetings yet. Create one to get started.</p>
+  {% endif %}
+{% endblock %}

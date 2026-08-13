@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ meeting['name'] }}{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>{{ meeting['name'] }}</h1>
+      <p class="card-sub">
+        {{ days|length }} day{{ 's' if days|length != 1 else '' }}:
+        {% for d in days %}<span class="pill">{{ d }}</span>{% endfor %}
+      </p>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <a class="btn btn-primary" href="{{ url_for('scan_page', meeting_id=meeting['id']) }}">📷 Scan Attendance</a>
+    <a class="btn" href="{{ url_for('report', meeting_id=meeting['id']) }}">📊 View Report</a>
+    <a class="btn" href="{{ url_for('badges_all', meeting_id=meeting['id']) }}" target="_blank">🖨️ Print All Badges</a>
+    <form method="POST" action="{{ url_for('delete_meeting', meeting_id=meeting['id']) }}"
+          onsubmit="return confirm('Delete this meeting and all its data?');">
+      <button type="submit" class="btn btn-danger">Delete Meeting</button>
+    </form>
+  </div>
+
+  <h2>Add Participant</h2>
+  <form method="POST" action="{{ url_for('new_participant', meeting_id=meeting['id']) }}" class="form form-inline">
+    <input type="text" name="name" placeholder="Full name" required>
+    <input type="text" name="organization" placeholder="Organization (optional)">
+    <button type="submit" class="btn btn-primary">Add + Generate QR</button>
+  </form>
+
+  <h2>Participants ({{ participants|length }})</h2>
+  {% if participants %}
+    <table class="table">
+      <thead>
+        <tr><th>Name</th><th>Organization</th><th>Code</th><th>QR</th><th>Badge</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in participants %}
+          <tr>
+            <td>{{ p['name'] }}</td>
+            <td>{{ p['organization'] or '—' }}</td>
+            <td><code>{{ p['code'] }}</code></td>
+            <td><img class="qr-thumb" src="{{ url_for('static', filename='qrcodes/' ~ p['code'] ~ '.png') }}" alt="QR"></td>
+            <td><a href="{{ url_for('badge', meeting_id=meeting['id'], pid=p['id']) }}" target="_blank">Print tag</a></td>
+            <td>
+              <form method="POST" action="{{ url_for('delete_participant', meeting_id=meeting['id'], pid=p['id']) }}"
+                    onsubmit="return confirm('Remove this participant?');">
+                <button type="submit" class="btn btn-small btn-danger">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No participants yet.</p>
+  {% endif %}
+{% endblock %}

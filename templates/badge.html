@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Badges — {{ meeting['name'] }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    .badges-wrap { display: flex; flex-wrap: wrap; gap: 16px; }
+    .badge {
+      width: 3.4in; height: 2.2in; background: white; border: 1px solid #ccc;
+      border-radius: 10px; padding: 14px; box-sizing: border-box;
+      display: flex; align-items: center; gap: 12px; page-break-inside: avoid;
+    }
+    .badge img { width: 1.4in; height: 1.4in; }
+    .badge-info { flex: 1; }
+    .badge-name { font-size: 18px; font-weight: bold; margin: 0 0 4px 0; }
+    .badge-org { font-size: 13px; color: #555; margin: 0 0 8px 0; }
+    .badge-meeting { font-size: 11px; color: #888; }
+    .print-btn { margin-bottom: 16px; padding: 8px 16px; }
+    @media print {
+      .print-btn { display: none; }
+      body { background: white; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+  <div class="badges-wrap">
+    {% for p in participants %}
+      <div class="badge">
+        <img src="{{ url_for('static', filename='qrcodes/' ~ p['code'] ~ '.png') }}" alt="QR code">
+        <div class="badge-info">
+          <p class="badge-name">{{ p['name'] }}</p>
+          <p class="badge-org">{{ p['organization'] or '' }}</p>
+          <p class="badge-meeting">{{ meeting['name'] }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Report — {{ meeting['name'] }}{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>Attendance Report</h1>
+    <a class="btn" href="{{ url_for('report_csv', meeting_id=meeting['id']) }}">⬇ Export CSV</a>
+  </div>
+  <p class="card-sub">{{ meeting['name'] }}</p>
+
+  {% if table %}
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Organization</th>
+            {% for d in days %}<th>{{ d }}</th>{% endfor %}
+            <th>Days Attended</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in table %}
+            <tr>
+              <td>{{ row.participant['name'] }}</td>
+              <td>{{ row.participant['organization'] or '—' }}</td>
+              {% for flag in row.flags %}
+                <td class="{{ 'flag-yes' if flag else 'flag-no' }}">{{ '✓' if flag else '—' }}</td>
+              {% endfor %}
+              <td><strong>{{ row.total }} / {{ days|length }}</strong></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No participants added yet.</p>
+  {% endif %}
+{% endblock %}
