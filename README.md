@@ -86,6 +86,6 @@ are required, and no data is sent anywhere outside your own server.
 Next steps for the program:
 - Multiple staff members scanning at once.
 - Email/SMS confirmation on check-in.
-- adding attendee role(presenter/attendee) on tag
-- adding organiser on Tag, for people who organized the meeting
-- removing meeting name on Tag
+- adding attendee role(presenter/attendee) on tag - Done
+- adding organiser on Tag, for people who organized the meeting - Done
+- removing meeting name on Tag - Done

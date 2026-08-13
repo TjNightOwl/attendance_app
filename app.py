@@ -1,8 +1,12 @@
 """
-programmer: Tarsizious Chikaonda
-E-mail: tarsiziouschikaonda@gmail.com
 Meeting Attendance Scanner
 --------------------------
+A mobile-friendly web app for scanning participant name-tag QR codes to
+confirm attendance across one or more meeting days.
+
+Run with:  python app.py
+Then open the printed URL on the phone that will do the scanning.
+See README.md for notes on camera permissions (HTTPS/localhost requirement).
 """
 
 import csv
@@ -52,6 +56,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS meetings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            organizer TEXT,              -- who organized the meeting (shown on tag)
             start_date TEXT NOT NULL,   -- YYYY-MM-DD
             end_date TEXT NOT NULL,     -- YYYY-MM-DD
             created_at TEXT NOT NULL
@@ -62,6 +67,7 @@ def init_db():
             meeting_id INTEGER NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
             name TEXT NOT NULL,
             organization TEXT,
+            role TEXT NOT NULL DEFAULT 'Attendee',  -- 'Presenter' or 'Attendee'
             code TEXT NOT NULL UNIQUE,   -- what's encoded in the QR
             created_at TEXT NOT NULL
         );
@@ -76,6 +82,17 @@ def init_db():
         );
         """
     )
+    db.commit()
+
+    # --- Lightweight migration for databases created before these columns existed ---
+    existing_meeting_cols = {row[1] for row in db.execute("PRAGMA table_info(meetings)")}
+    if "organizer" not in existing_meeting_cols:
+        db.execute("ALTER TABLE meetings ADD COLUMN organizer TEXT")
+
+    existing_participant_cols = {row[1] for row in db.execute("PRAGMA table_info(participants)")}
+    if "role" not in existing_participant_cols:
+        db.execute("ALTER TABLE participants ADD COLUMN role TEXT NOT NULL DEFAULT 'Attendee'")
+
     db.commit()
     db.close()
 
@@ -131,6 +148,7 @@ def index():
 def new_meeting():
     if request.method == "POST":
         name = request.form["name"].strip()
+        organizer = request.form.get("organizer", "").strip()
         start_date = request.form["start_date"]
         end_date = request.form["end_date"]
 
@@ -144,8 +162,8 @@ def new_meeting():
 
         db = get_db()
         cur = db.execute(
-            "INSERT INTO meetings (name, start_date, end_date, created_at) VALUES (?, ?, ?, ?)",
-            (name, start_date, end_date, datetime.now().isoformat()),
+            "INSERT INTO meetings (name, organizer, start_date, end_date, created_at) VALUES (?, ?, ?, ?, ?)",
+            (name, organizer, start_date, end_date, datetime.now().isoformat()),
         )
         db.commit()
         flash("Meeting created.", "success")
@@ -186,6 +204,10 @@ def new_participant(meeting_id):
     get_meeting_or_404(meeting_id)
     name = request.form["name"].strip()
     organization = request.form.get("organization", "").strip()
+    role = request.form.get("role", "Attendee").strip()
+    valid_roles = ("Speaker", "Attendee", "Host", "Chairperson/Moderator", "Keynote Speaker")
+    if role not in valid_roles:
+        role = "Attendee"
 
     if not name:
         flash("Participant name is required.", "error")
@@ -194,9 +216,9 @@ def new_participant(meeting_id):
     code = f"P-{uuid.uuid4().hex[:10].upper()}"
     db = get_db()
     db.execute(
-        "INSERT INTO participants (meeting_id, name, organization, code, created_at) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (meeting_id, name, organization, code, datetime.now().isoformat()),
+        "INSERT INTO participants (meeting_id, name, organization, role, code, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (meeting_id, name, organization, role, code, datetime.now().isoformat()),
     )
     db.commit()
     ensure_qr_image(code)
@@ -352,10 +374,10 @@ def report_csv(meeting_id):
 
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["Name", "Organization"] + days + ["Days Attended"])
+    writer.writerow(["Name", "Organization", "Role"] + days + ["Days Attended"])
     for p in participants:
         p_attended = attended.get(p["id"], set())
-        row = [p["name"], p["organization"] or ""]
+        row = [p["name"], p["organization"] or "", p["role"]]
         row += ["Yes" if d in p_attended else "No" for d in days]
         row.append(len(p_attended))
         writer.writerow(row)

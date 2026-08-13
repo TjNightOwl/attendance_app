@@ -14,8 +14,17 @@
     .badge img { width: 1.4in; height: 1.4in; }
     .badge-info { flex: 1; }
     .badge-name { font-size: 18px; font-weight: bold; margin: 0 0 4px 0; }
-    .badge-org { font-size: 13px; color: #555; margin: 0 0 8px 0; }
-    .badge-meeting { font-size: 11px; color: #888; }
+    .badge-org { font-size: 13px; color: #555; margin: 0 0 6px 0; }
+    .badge-role {
+      display: inline-block; font-size: 11px; font-weight: bold; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px;
+    }
+    .badge-role.presenter, .badge-role.role-speaker { background: #fef3c7; color: #92400e; }
+    .badge-role.attendee, .badge-role.role-attendee { background: #e0e7ff; color: #3730a3; }
+    .badge-role.role-keynote-speaker { background: #fee2e2; color: #991b1b; }
+    .badge-role.role-host { background: #dcfce7; color: #166534; }
+    .badge-role.role-chairperson-moderator { background: #f3e8ff; color: #6b21a8; }
+    .badge-organizer { font-size: 11px; color: #888; }
     .print-btn { margin-bottom: 16px; padding: 8px 16px; }
     @media print {
       .print-btn { display: none; }
@@ -31,8 +40,11 @@
         <img src="{{ url_for('static', filename='qrcodes/' ~ p['code'] ~ '.png') }}" alt="QR code">
         <div class="badge-info">
           <p class="badge-name">{{ p['name'] }}</p>
+          <span class="badge-role role-{{ p['role']|lower|replace(' ', '-')|replace('/', '-') }}">{{ p['role'] }}</span>
           <p class="badge-org">{{ p['organization'] or '' }}</p>
-          <p class="badge-meeting">{{ meeting['name'] }}</p>
+          {% if meeting['organizer'] %}
+            <p class="badge-organizer">Organized by {{ meeting['organizer'] }}</p>
+          {% endif %}
         </div>
       </div>
     {% endfor %}
